@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <title>Onam Formu – Sesli Okuma</title>
+  <style>
+    :root { color-scheme: light; --ink: #172033; --blue: #174ea6; --pale: #eef4ff; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 24px 16px 40px; background: #f7f9fc; color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65; font-size: 19px;
+    }
+    main { max-width: 760px; margin: 0 auto; }
+    header, section { background: white; border: 1px solid #dbe2ee; border-radius: 18px; padding: 22px; margin-bottom: 16px; }
+    h1 { font-size: clamp(1.65rem, 5vw, 2.25rem); line-height: 1.2; margin: 0 0 10px; }
+    h2 { font-size: 1.25rem; margin: 0 0 12px; }
+    p { margin: 0 0 14px; }
+    .hint { color: #3f4b60; font-size: 1rem; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+    button {
+      appearance: none; border: 3px solid transparent; border-radius: 14px; min-height: 60px;
+      padding: 14px 16px; font: inherit; font-weight: 700; cursor: pointer;
+    }
+    button:focus-visible { outline: 4px solid #f4b400; outline-offset: 3px; }
+    #speak { background: var(--blue); color: white; }
+    #stop { background: var(--pale); color: #17345f; border-color: #c5d7fb; }
+    #status { margin-top: 14px; min-height: 1.6em; font-size: 1rem; }
+    .notice { font-size: .92rem; color: #475569; }
+    @media (max-width: 480px) {
+      body { padding: 14px 10px 28px; }
+      header, section { padding: 18px; border-radius: 14px; }
+      .actions { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Onam Formu</h1>
+    <p>Bu sayfadaki metni dinlemek için <strong>“Sesli Oku”</strong> düğmesine dokunun.</p>
+    <p class="hint">İsterseniz metni durdurabilir veya yeniden dinleyebilirsiniz.</p>
+    <div class="actions">
+      <button id="speak" type="button">🔊 Sesli Oku</button>
+      <button id="stop" type="button">■ Okumayı Durdur</button>
+    </div>
+    <p id="status" role="status" aria-live="polite">Hazır. Sesli okumayı başlatabilirsiniz.</p>
+  </header>
+
+  <section aria-labelledby="text-title">
+    <h2 id="text-title">Onam metni</h2>
+    <!-- Bu örnek metni, kurum tarafından onaylanmış gerçek onam metniyle değiştirin. -->
+    <div id="consent-text">
+      <p>ÖRNEK ONAM METNİ.</p>
+      <p>Bu bölüm şu anda yalnızca deneme amacıyla hazırlanmıştır. Buraya kurumunuzun onayladığı onam formunun tam metni eklenmelidir.</p>
+      <p>Metni okudum veya dinledim. Anlamadığım konular hakkında soru sorma fırsatım oldu. Kararımı özgür irademle verebilirim.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="notice"><strong>Önemli:</strong> Bu sayfa bir prototiptir; örnek metin resmî onam metni değildir. Gerçek kullanım öncesinde kurumun onaylı metni, erişilebilirlik ve gizlilik koşulları doğrulanmalıdır.</p>
+  </section>
+</main>
+<script>
+(() => {
+  const speakButton = document.getElementById('speak');
+  const stopButton = document.getElementById('stop');
+  const status = document.getElementById('status');
+  const textArea = document.getElementById('consent-text');
+
+  function getTurkishVoice() {
+    const voices = window.speechSynthesis.getVoices();
+    return voices.find(v => v.lang && v.lang.toLowerCase() === 'tr-tr')
+      || voices.find(v => v.lang && v.lang.toLowerCase().startsWith('tr'))
+      || null;
+  }
+
+  speakButton.addEventListener('click', () => {
+    if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+      status.textContent = 'Bu tarayıcı sesli okumayı desteklemiyor. Lütfen güncel Safari veya Chrome ile deneyin.';
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const text = textArea.innerText.trim();
+    if (!text) {
+      status.textContent = 'Okunacak metin bulunamadı.';
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'tr-TR';
+    const voice = getTurkishVoice();
+    if (voice) utterance.voice = voice;
+    utterance.rate = 0.88;
+    utterance.pitch = 1;
+    utterance.onstart = () => { status.textContent = 'Metin sesli okunuyor.'; };
+    utterance.onend = () => { status.textContent = 'Okuma tamamlandı.'; };
+    utterance.onerror = () => { status.textContent = 'Sesli okuma başlatılamadı. Tekrar deneyin.'; };
+    window.speechSynthesis.speak(utterance);
+  });
+
+  stopButton.addEventListener('click', () => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    status.textContent = 'Okuma durduruldu.';
+  });
+
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = () => {};
+  }
+})();
+</script>
+</body>
+</html>
